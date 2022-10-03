@@ -1,7 +1,5 @@
 package ru.javawebinar.topjava.util;
 
-//import jdk.vm.ci.meta.Local;
-
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.model.UserMealWithExcess;
 
@@ -14,72 +12,80 @@ import java.util.stream.Collectors;
 
 public class UserMealsUtil {
 
-
+    /**
+     * This inner class helps you to collect meals by dates and count calories. It also tracks calories excess.
+     * The first meals are included in the local meal list until calories limit is occurred.
+     * When the calories limit is reached local meal storage is loading into result excess list which is common for all dates.
+     * After that all subsequent meals are added not to the local, but to the result excess list.
+     * All of these actions also take into account the correspondence of meals to the given time period
+     */
     private static class ListWithCounter {
         private final List<UserMealWithExcess> currentList;
-        private final List<UserMealWithExcess> resultList;
+        private final List<UserMealWithExcess> resultExcessList;
         private int calories;
         private final int caloriesLimit;
         private boolean excess = false;
 
-        private ListWithCounter(UserMeal meal, boolean mealIsSuitable, List<UserMealWithExcess> excessList, int limit) {
-            currentList = new LinkedList<>();
-            resultList = excessList;
+        private ListWithCounter(UserMeal meal, boolean suitableByTime, List<UserMealWithExcess> excessList, int limit) {
             caloriesLimit = limit;
+            currentList = new LinkedList<>();
+            this.resultExcessList = excessList;
             calories = meal.getCalories();
+
             if (calories >= caloriesLimit) {
                 excess = true;
-                if (mealIsSuitable) {
-                    resultList.add(new UserMealWithExcess(meal));
+                if (suitableByTime) {
+                    this.resultExcessList.add(new UserMealWithExcess(meal));
                 }
                 return;
             }
-            if (mealIsSuitable) {
+            if (suitableByTime) {
                 currentList.add(new UserMealWithExcess(meal));
             }
 
         }
 
-        private void addToNum(Integer num) {
+        private void addCalories(int num) {
             calories += num;
             if (calories >= caloriesLimit) {
                 excess = true;
             }
         }
-        public void processMeal(UserMeal value, boolean mealIsSuitable) {
-            if(mealIsSuitable) {
-                processSuitableMeal(value);
+
+        public void processMeal(UserMeal meal, boolean suitableByTime) {
+            if (suitableByTime) {
+                processSuitableMeal(meal);
             } else {
-                processUnsuitableMeal(value);
+                processUnsuitableMeal(meal);
             }
         }
-        private void processSuitableMeal(UserMeal value) {
+
+        private void processSuitableMeal(UserMeal meal) {
             if (excess) {
-                resultList.add(new UserMealWithExcess(value));
-                addToNum(value.getCalories());
+                resultExcessList.add(new UserMealWithExcess(meal));
+                addCalories(meal.getCalories());
                 return;
             }
-
-            addToNum(value.getCalories());
+            addCalories(meal.getCalories());
             if (excess) {
-                resultList.addAll(currentList);
-                resultList.add(new UserMealWithExcess(value));
+                resultExcessList.addAll(currentList);
+                resultExcessList.add(new UserMealWithExcess(meal));
             } else {
-                currentList.add(new UserMealWithExcess(value));
+                currentList.add(new UserMealWithExcess(meal));
             }
         }
 
         private void processUnsuitableMeal(UserMeal value) {
-            if(excess){
-                addToNum(value.getCalories());
+            if (excess) {
+                addCalories(value.getCalories());
                 return;
             }
-
-            addToNum(value.getCalories());
-            if(excess) {
-                resultList.addAll(currentList);
+            addCalories(value.getCalories());
+            if (excess) {
+                resultExcessList.addAll(currentList);
             }
         }
+
     }
 
     public static void main(String[] args) {
@@ -93,15 +99,15 @@ public class UserMealsUtil {
                 new UserMeal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410)
         );
 
-       // List<UserMealWithExcess> mealsTo = filteredByCycles2(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
-       // mealsTo.forEach(System.out::println);
+        List<UserMealWithExcess> mealsTo = filteredByCycles2(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        mealsTo.forEach(System.out::println);
 
         System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         Map<LocalDate, Integer> mealMap = new HashMap<>();
-        for (UserMeal meal : meals) { // we can also try map<LocalDate, List<meals> >
+        for (UserMeal meal : meals) {
             mealMap.merge(LocalDate.from(meal.getDateTime()), meal.getCalories(), Integer::sum);
         }
         List<UserMealWithExcess> resultList = new ArrayList<>();
