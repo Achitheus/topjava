@@ -7,14 +7,19 @@
     <title>Meals</title>
     <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
     <style>
-        .normal {color: darkgreen}
-        .exceeded {color: red}
+        .normal {
+            color: darkgreen
+        }
+
+        .exceeded {
+            color: red
+        }
     </style>
 </head>
 <body>
 <h3><a href="index.html">Home</a></h3>
 <h2>Meals</h2>
-<h3><a href="${pageContext.request.contextPath}/meals?action=add">Add meal</a> </h3>
+<h3><a href="meals?action=add">Add meal</a></h3>
 <h3>
     <table border="1" cellpadding="8" cellspacing="0">
         <thead>
@@ -31,15 +36,15 @@
         <jsp:useBean id="list" scope="request" type="java.util.List"/>
         <c:forEach items="${list}" var="meal">
             <jsp:useBean id="meal" scope="page" type="ru.javawebinar.topjava.model.MealTO"/>
-            <tr class=" ${meal.excess ? 'exceeded' : 'normal'}" >
+            <tr class=" ${meal.excess ? 'exceeded' : 'normal'}">
 
                 <th>${meal.description}</th>
                 <th>${meal.date}</th>
                 <th>${meal.time}</th>
                 <th>${meal.calories}</th>
                 <th>${meal.excess}</th>
-                <th><a href="${pageContext.request.contextPath}/meals?action=update&id=${meal.id}">Update</a> </th>
-                <th><a href="${pageContext.request.contextPath}/meals?action=delete&id=${meal.id}">Delete</a> </th>
+                <th><a href="meals?action=update&id=${meal.id}">Update</a></th>
+                <th><a href="meals?action=delete&id=${meal.id}">Delete</a></th>
             </tr>
         </c:forEach>
         </tbody>

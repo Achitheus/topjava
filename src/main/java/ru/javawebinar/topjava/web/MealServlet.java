@@ -12,7 +12,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,7 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MealServlet extends HttpServlet {
 
     public static final Logger log = getLogger(MealServlet.class);
-    //public MealStorage storage;
     public MealRepository storage;
     public static final int MAX_CALORIES = 2000;
 
@@ -37,26 +39,21 @@ public class MealServlet extends HttpServlet {
         String action = request.getParameter("action");
         if (action == null) {
             log.debug("get all");
+            List<MealTO> meals = MealsUtil.toTOlist(storage.getAll(), MAX_CALORIES);
+            request.setAttribute("list", meals);
+            request.getRequestDispatcher("meals.jsp").forward(request, response);
         } else if (action.equals("delete")) {
             log.debug("delete meal");
             storage.delete(getId(request));
             response.sendRedirect("meals");
-            return;
-        } else if (action.equals("update")) {
-            log.debug("update meal");
-            int id = getId(request);
-            request.setAttribute("meal", storage.get(id));
+        } else {
+            boolean isUpdate = action.equals("update");
+            log.debug(isUpdate ? "update meal" : "add meal");
+            request.setAttribute("meal", isUpdate
+                    ? storage.get(getId(request))
+                    : new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS), "", 1000));
             request.getRequestDispatcher("mealEdit.jsp").forward(request, response);
-        } else if (action.equals("add")) {
-            log.debug("add meal");
-            Meal meal = new Meal(LocalDateTime.now(), "", 1000);
-            request.setAttribute("meal", meal);
-            request.getRequestDispatcher("mealEdit.jsp").forward(request, response);
-            return;
         }
-        List<MealTO> meals = MealsUtil.toTOlist(storage.getAll(), MAX_CALORIES);
-        request.setAttribute("list", meals);
-        request.getRequestDispatcher("meals.jsp").forward(request, response);
     }
 
     private int getId(HttpServletRequest request) {
@@ -65,6 +62,15 @@ public class MealServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
+        request.setCharacterEncoding("UTF-8");
+        String id = request.getParameter("id");
+        Meal meal = new Meal(id.isEmpty() ? null : Integer.parseInt(id)
+                , LocalDateTime.of(LocalDate.parse(request.getParameter("date"))
+                , LocalTime.parse(request.getParameter("time")))
+                , request.getParameter("description")
+                , Integer.parseInt(request.getParameter("calories")));
+        log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
+        storage.save(meal);
+        response.sendRedirect("meals");
     }
 }
