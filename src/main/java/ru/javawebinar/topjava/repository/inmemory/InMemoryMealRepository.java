@@ -4,14 +4,16 @@ import org.springframework.stereotype.Repository;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 import ru.javawebinar.topjava.util.MealsUtil;
+import ru.javawebinar.topjava.util.Util;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository.ADMIN_ID;
 
 @Repository
 public class InMemoryMealRepository implements MealRepository {
@@ -20,6 +22,8 @@ public class InMemoryMealRepository implements MealRepository {
 
     {
         MealsUtil.meals.forEach(meal -> save(meal, 1));
+        save(new Meal(LocalDateTime.of(1994, 11, 23, 1, 4), "admin meal1", 510), ADMIN_ID);
+        save(new Meal(LocalDateTime.of(1994, 11, 23, 1, 4), "admin meal2", 900), ADMIN_ID);
     }
 
     @Override // null if updated meal does not belong to userId
@@ -48,8 +52,18 @@ public class InMemoryMealRepository implements MealRepository {
 
     @Override // ORDERED dateTime desc
     public Collection<Meal> getAll(int userId) {
+        return getAllFiltered(userId, meal -> true);
+    }
+
+    @Override
+    public List<Meal> getBetweenByDate(LocalDateTime startDate, LocalDateTime endDate, int userId) {
+        return getAllFiltered(userId, meal -> Util.isBetweenClosed(meal.getDateTime(), startDate, endDate));
+    }
+
+    private List<Meal> getAllFiltered(int userId, Predicate<Meal> filter) {
         Map<Integer, Meal> usersMap = repository.get(userId);
         return usersMap.isEmpty() ? Collections.emptyList() : usersMap.values().stream()
+                .filter(filter)
                 .sorted(Comparator.comparing(Meal::getDateTime).reversed())
                 .collect(Collectors.toList());
     }
