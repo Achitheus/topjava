@@ -1,4 +1,6 @@
 DELETE
+FROM meals;
+DELETE
 FROM user_roles;
 DELETE
 FROM users;
@@ -12,3 +14,10 @@ VALUES ('User', 'user@yandex.ru', 'password'),
 INSERT INTO user_roles (role, user_id)
 VALUES ('USER', 100000),
        ('ADMIN', 100001);
+
+INSERT INTO meals (user_id, date_time, calories, description)
+VALUES (100000, '2022-06-22 19:10:25+03', 1000, 'user havka'),
+       (100000, '2022-06-22 10:10:25+03', 2000, 'user big havka'),
+       (100000, '2022-06-22 15:10:25+03', 1400, 'another user havka'),
+       (100001, '2022-06-22 19:10:25+03', 1000, 'admin havka'),
+       (100001, '2022-06-22 10:10:25+03', 2000, 'admin big havka');
