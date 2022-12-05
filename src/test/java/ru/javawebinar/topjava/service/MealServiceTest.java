@@ -2,8 +2,6 @@ package ru.javawebinar.topjava.service;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ContextConfiguration;
@@ -13,7 +11,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.junit.Assert.assertThrows;
@@ -26,11 +24,11 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
-    static {
+    /*static {
         // Only for postgres driver logging
         // It uses java.util.logging and logged via jul-to-slf4j bridge
         SLF4JBridgeHandler.install();
-    }
+    }*/
 
     @Autowired
     MealService mealService;
@@ -48,7 +46,7 @@ public class MealServiceTest {
     @Test
     public void duplicateDateTimeCreate() {
         assertThrows(DataAccessException.class, () ->
-    mealService.create(new Meal(LocalDateTime.of(2022, 6, 22, 15, 10, 25), "another user havka", 1400), USER_ID));
+                mealService.create(new Meal(LocalDateTime.of(2022, 6, 27, 15, 10), "duplicate dateTime havka", 1400), USER_ID));
     }
 
     @Test
@@ -108,10 +106,13 @@ public class MealServiceTest {
 
     @Test
     public void getBetweenInclusive() {
+        assertMatch(mealService.getBetweenInclusive(LocalDate.of(2022, 6,23), LocalDate.of(2022, 6, 27), USER_ID),
+                userMeal3,
+                userMeal2);
     }
 
     @Test
     public void getAll() {
-        assertMatch(mealService.getAll(USER_ID), userMeal1, userMeal3, userMeal2);
+        assertMatch(mealService.getAll(USER_ID), userMeal3, userMeal2, userMeal1);
     }
 }
