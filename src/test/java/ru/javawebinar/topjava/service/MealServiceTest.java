@@ -31,17 +31,6 @@ public class MealServiceTest {
     private MealService service;
 
     @Test
-    public void create() {
-        Meal created = service.create(getNew(), USER_ID);
-        int newId = created.id();
-        Meal newMeal = getNew();
-        newMeal.setUser(created.getUser());
-        newMeal.setId(newId);
-        MEAL_MATCHER.assertMatch(created, newMeal);
-        MEAL_MATCHER.assertMatch(service.get(newId, USER_ID), newMeal);
-    }
-
-    @Test
     public void delete() {
         service.delete(MEAL1_ID, USER_ID);
         assertThrows(NotFoundException.class, () -> service.get(MEAL1_ID, USER_ID));
@@ -58,6 +47,16 @@ public class MealServiceTest {
     }
 
     @Test
+    public void create() {
+        Meal created = service.create(getNew(), USER_ID);
+        int newId = created.id();
+        Meal newMeal = getNew();
+        newMeal.setId(newId);
+        MEAL_MATCHER.assertMatch(created, newMeal);
+        MEAL_MATCHER.assertMatch(service.get(newId, USER_ID), newMeal);
+    }
+
+    @Test
     public void duplicateDateTimeCreate() {
         assertThrows(DataAccessException.class, () ->
                 service.create(new Meal(null, meal1.getDateTime(), "duplicate", 100), USER_ID));
@@ -65,9 +64,8 @@ public class MealServiceTest {
 
     @Test
     public void get() {
-        Meal persistedMeal = service.get(ADMIN_MEAL_ID, ADMIN_ID);
-        adminMeal1.setUser(persistedMeal.getUser());
-        MEAL_MATCHER.assertMatch(persistedMeal, adminMeal1);
+        Meal actual = service.get(ADMIN_MEAL_ID, ADMIN_ID);
+        MEAL_MATCHER.assertMatch(actual, adminMeal1);
     }
 
     @Test
