@@ -35,7 +35,7 @@ public class MealsUtil {
         return meals.stream()
                 .filter(filter)
                 .map(meal -> createTo(meal, caloriesSumByDate.get(meal.getDate()) > caloriesPerDay))
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private static MealTo createTo(Meal meal, boolean excess) {
